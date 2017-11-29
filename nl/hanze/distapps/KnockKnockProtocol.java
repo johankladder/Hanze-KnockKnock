@@ -1,4 +1,5 @@
 package nl.hanze.distapps;
+
 /*
  * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
  *
@@ -28,66 +29,75 @@ package nl.hanze.distapps;
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 import java.net.*;
 import java.io.*;
 
 public class KnockKnockProtocol {
-    private static final int WAITING = 0;
-    private static final int SENTKNOCKKNOCK = 1;
-    private static final int SENTCLUE = 2;
-    private static final int ANOTHER = 3;
-    private static final int NUMJOKES = 5;
+	private static final int WAITING = 0;
+	private static final int SETLANG = 1;
+	private static final int WORD = 2;
+	private static final int SENTENCE = 3;
+	private static final int TYPE = 4;
 
-    private int state = WAITING;
-    private int currentJoke = 0;
+	private int state = WAITING;
+	private Translater translater;
 
-    private String[] clues = { "Turnip", "Little Old Lady", "Atch", "Who", "Who" };
-    private String[] answers = { "Turnip the heat, it's cold in here!",
-                                 "I didn't know you could yodel!",
-                                 "Bless you!",
-                                 "Is there an owl in here?",
-                                 "Is there an echo in here?" };
+	public KnockKnockProtocol() {
+		this.translater = new Translater();
+	}
 
-    public String processInput(String theInput) {
-        String theOutput = null;
+	public String processInput(String theInput) {
+		String theOutput = null;
 
-        if (state == WAITING) {
-            theOutput = "Knock! Knock!";
-            state = SENTKNOCKKNOCK;
-        } else if (state == SENTKNOCKKNOCK) {
-            if (theInput.equalsIgnoreCase("Who's there?")) {
-                theOutput = clues[currentJoke];
-                state = SENTCLUE;
-            } else {
-                theOutput = "You're supposed to say \"Who's there?\"! " +
-			    "Try again. Knock! Knock!";
-            }
-        } else if (state == SENTCLUE) {
-            if (theInput.equalsIgnoreCase(clues[currentJoke] + " who?")) {
-                theOutput = answers[currentJoke] + " Want another? (y/n)";
-                state = ANOTHER;
-            } else {
-                theOutput = "You're supposed to say \"" + 
-			    clues[currentJoke] + 
-			    " who?\"" + 
-			    "! Try again. \nKnock! Knock!";
-                state = SENTKNOCKKNOCK;
-            }
-        } else if (state == ANOTHER) {
-            if (theInput.equalsIgnoreCase("y")) {
-                theOutput = "Knock! Knock!";
-                if (currentJoke == (NUMJOKES - 1))
-                    currentJoke = 0;
-                else
-                    currentJoke++;
-                state = SENTKNOCKKNOCK;
-            } else {
-                theOutput = "Bye.";
-                state = WAITING;
-            }
-        }
-        return theOutput;
-    }
+		switch (state) {
+		case WAITING:
+			theOutput = "Welke taal?";
+			state = SETLANG;
+			break;
+		case SETLANG:
+			if(this.translater.languageAvailable(theInput)){
+				this.translater.setLanguage(theInput);
+				theOutput = "Wilt u een woord of zin vertalen?";
+				state = TYPE;
+			}
+			else{
+				theOutput = "Taal niet herkend, probeer opnieuw";
+			}
+			break;
+		case TYPE:
+			switch (theInput){
+			case "word":
+				theOutput = "Vul een woord in om te vertalen";
+				state = WORD;
+				break;
+			case "sentence":
+				theOutput = "Vul een zin in om te vertalen";
+				state = SENTENCE;
+				break;
+			default:
+				theOutput = "Input niet herkend. Kies voor 'word' of 'sentence'";
+				break;
+			}
+			break;
+		case WORD:
+			String word = this.translater.getTranslatedWord(theInput);
+			if(word != null){
+				theOutput = "Translated word: " + word;
+			}else{
+				theOutput = "Word not found";
+			}
+			break;
+		case SENTENCE:
+			String[] words = theInput.split(" ");
+			theOutput = "";
+			for(String w : words) {
+				theOutput += this.translater.getTranslatedWord(w) + " "; 
+			}
+			break;
+		}
+
+		return theOutput;
+	}
 }
