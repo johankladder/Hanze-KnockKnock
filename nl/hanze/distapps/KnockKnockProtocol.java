@@ -31,73 +31,91 @@ package nl.hanze.distapps;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.net.*;
-import java.io.*;
-
 public class KnockKnockProtocol {
-	private static final int WAITING = 0;
-	private static final int SETLANG = 1;
-	private static final int WORD = 2;
-	private static final int SENTENCE = 3;
-	private static final int TYPE = 4;
+    private static final int WAITING = 0;
+    private static final int SETLANG = 1;
+    private static final int SET_TYPE = 2;
+    private static final int TYPE = 3;
+    private static final int WORD = 4;
+    private static final int SENTENCE = 5;
 
-	private int state = WAITING;
-	private Translater translater;
 
-	public KnockKnockProtocol() {
-		this.translater = new Translater();
-	}
+    private int state = WAITING;
 
-	public String processInput(String theInput) {
-		String theOutput = null;
+    private static final int[] STATE_ARRAY = new int[]{
+            WAITING, SETLANG, SET_TYPE, TYPE, WORD, SENTENCE
+    };
 
-		switch (state) {
-		case WAITING:
-			theOutput = "Welke taal?";
-			state = SETLANG;
-			break;
-		case SETLANG:
-			if(this.translater.languageAvailable(theInput)){
-				this.translater.setLanguage(theInput);
-				theOutput = "Wilt u een woord of zin vertalen?";
-				state = TYPE;
-			}
-			else{
-				theOutput = "Taal niet herkend, probeer opnieuw";
-			}
-			break;
-		case TYPE:
-			switch (theInput){
-			case "word":
-				theOutput = "Vul een woord in om te vertalen";
-				state = WORD;
-				break;
-			case "sentence":
-				theOutput = "Vul een zin in om te vertalen";
-				state = SENTENCE;
-				break;
-			default:
-				theOutput = "Input niet herkend. Kies voor 'word' of 'sentence'";
-				break;
-			}
-			break;
-		case WORD:
-			String word = this.translater.getTranslatedWord(theInput);
-			if(word != null){
-				theOutput = "Translated word: " + word;
-			}else{
-				theOutput = "Word not found";
-			}
-			break;
-		case SENTENCE:
-			String[] words = theInput.split(" ");
-			theOutput = "";
-			for(String w : words) {
-				theOutput += this.translater.getTranslatedWord(w) + " "; 
-			}
-			break;
-		}
+    private Translater translater;
 
-		return theOutput;
-	}
+    public KnockKnockProtocol() {
+        this.translater = new Translater();
+    }
+
+    public String processInput(String theInput) {
+        String theOutput = null;
+
+        if (theInput != null && theInput.equals("back")) {
+            back(state);
+        }
+
+        switch (state) {
+            case WAITING:
+                theOutput = "Welke taal?";
+                state = SETLANG;
+                break;
+            case SETLANG:
+                if (this.translater.languageAvailable(theInput)) {
+                    this.translater.setLanguage(theInput);
+                    state = TYPE;
+                    theOutput = "Taal: " + theInput + " ingesteld";
+                } else {
+                    theOutput = "Taal niet herkend, probeer opnieuw. Welke taal?";
+                    state = SETLANG;
+                }
+                break;
+            case SET_TYPE:
+                theOutput = "Wilt u een woord of zin vertalen?";
+                state = TYPE;
+                break;
+            case TYPE:
+                switch (theInput) {
+                    case "word":
+                        theOutput = "Vul een woord in om te vertalen";
+                        state = WORD;
+                        break;
+                    case "sentence":
+                        theOutput = "Vul een zin in om te vertalen";
+                        state = SENTENCE;
+                        break;
+                    default:
+                        theOutput = "Input niet herkend. Kies voor 'word' of 'sentence'";
+                        break;
+                }
+                break;
+            case WORD:
+                String word = this.translater.getTranslatedWord(theInput);
+                if (word != null) {
+                    theOutput = "Translated word: " + word;
+                } else {
+                    theOutput = "Word not found";
+                }
+                break;
+            case SENTENCE:
+                String[] words = theInput.split(" ");
+                theOutput = "";
+                for (String w : words) {
+                    theOutput += this.translater.getTranslatedWord(w) + " ";
+                }
+                break;
+        }
+
+        return theOutput;
+    }
+
+    public void back(int currentState) {
+        if (currentState > 1) {
+            state = STATE_ARRAY[currentState - 2];
+        }
+    }
 }
