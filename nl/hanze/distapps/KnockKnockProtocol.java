@@ -67,13 +67,12 @@ public class KnockKnockProtocol {
             case SETLANG:
                 if (this.translater.languageAvailable(theInput)) {
                     this.translater.setLanguage(theInput);
-                    state = TYPE;
-                    theOutput = "Taal: " + theInput + " ingesteld";
+                    state = SET_TYPE;
                 } else {
                     theOutput = "Taal niet herkend, probeer opnieuw. Welke taal?";
                     state = SETLANG;
+                    break;
                 }
-                break;
             case SET_TYPE:
                 theOutput = "Wilt u een woord of zin vertalen?";
                 state = TYPE;
